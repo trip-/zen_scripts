@@ -22,4 +22,14 @@ All content is to be considerd under GPL v3, if not specified.
 
 Here you'll find the list of scripts with a little brief:
 
-* **Test** Little brief
+Python
+------
+* **translate.py** Uses google apis to translate text into various language, default is italian -> english
+
+Ruby
+------
+* **ph.rb** Placeholds the directory
+
+Bash
+------
+* **rinomina** Uses vim to rename a file
