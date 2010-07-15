@@ -27,7 +27,7 @@ begin
 end
 
 # Il fatto website account data
-FATTTOUSER=""
+FATTOUSER=""
 FATTOPSW=""
 
 # Download folder
@@ -50,7 +50,7 @@ if now.wday == 1 #Monday
 else
     today = sprintf("%d%02d%02d",now.year,now.month,now.day)
     pdf = agent.get "http://www.ilfattoquotidiano.it/openpdf/?n=#{today}"
-    File.open("#{File.join(DPATH,today}.pdf","w") do |file|
+    File.open("#{File.join(DPATH,today)}.pdf", "w") do |file|
         file << pdf.body
     end
 end
