@@ -29,6 +29,7 @@ Python
 Ruby
 ------
 * **ph.rb** Placeholds the directory
+* **get_fatto_quotidiano** Simple script to download world's best newspaper :P
 
 Bash
 ------
