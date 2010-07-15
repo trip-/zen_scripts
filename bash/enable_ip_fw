@@ -1,0 +1,25 @@
+#! /bin/bash
+
+# Author: Salvatore Brundo
+# Title: enable_ip_fm
+
+# Description:
+# Enable ip forwarding on a certain interface 
+# in order to share your connection
+
+# Usage:
+# enable_ip_fw interface
+
+# License: see LICENSE 
+
+##IP-FORWARDING
+#modprobe ip_tables 
+#modprobe iptables_nat
+#modprobe ipt_MASQUERADE
+
+iptables -t nat -A POSTROUTING -o $1 -j MASQUERADE
+
+echo "1" > /proc/sys/net/ipv4/ip_forward
+
+echo "Ip-Forwarding attivato!!!"
+	

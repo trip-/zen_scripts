@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Author: Mattia Gheda
+# Title: powersave
+
+# Description:
+# enabling powersave governor on battery power
+# meant to be called on acpi events
+
+# Configuration:
+# BATDEVICE param has to be set
+
+# License: see LICENSE
+
+BATDEVICE=BAT1
+
+if [ ` cat /proc/acpi/battery/$BATDEVICE/state | tail -n4 | head -n1  | cut -c 26-36 ` == "discharging" ]; then 
+	sudo cpufreq-set -g powersave ;
+	echo "setting powersave governor";
+else
+	echo "leaving current governor policy unchanged";
+fi
