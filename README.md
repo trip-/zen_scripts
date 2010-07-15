@@ -33,3 +33,7 @@ Ruby
 Bash
 ------
 * **rinomina** Uses vim to rename a file
+* **powersave** Sets powersave governor on battery power
+* **enable_ip_fw** Enables ip forwarding on given interface
+* **fm** Key-bindable interface to shell-fm
+* **gnuplot_graph_example** Simple gnuplot usage example
