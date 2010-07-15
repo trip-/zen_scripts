@@ -1,0 +1,448 @@
+#!/usr/bin/perl
+
+# last.fm-ripper - (c) Copyright 2006  Jochen Schneider <scne59@googlemail.com>
+# 
+# a simple last.fm to mp3-file ripper 
+# 
+# This program is free software; you can redistribute it and/or modify 
+# it under the same terms as Perl itself.
+
+$VERSION = 1.2;
+
+$version = '1.1.4'; # current version string of the offical last.fm player
+$platform = guess_platform();
+$ws_host = 'ws.audioscrobbler.com'; # last.fm webservices hostname
+$output_directory = '.'; # where to store mp3 files
+$get_covers = 1 unless (system("wget --version > /dev/null")==-1); # retrieve covers if wget is available
+
+# check if all essential modules are in place
+map
+{
+  my $module = $_;
+  unless (eval "use $module; 1")
+  {
+    print "Module \"$module\" is not availabe on your Perl installation\nEnter \"perl -MCPAN -e \"install $module\" to install it\n\n";
+    exit(1);
+  }
+} ('Getopt::Long','IO::Socket','FileHandle','Digest::MD5','IO::Select');
+
+# can we tag the mp3 files?
+if(eval "use MP3::Tag; 1")
+{
+  $tag_mp3s = 1;
+}
+
+STDOUT->autoflush;
+$SIG{INT} = sub { $bye_bye = 1 };
+
+Getopt::Long::Configure("pass_through");
+GetOptions(  'help|?' => \$help,
+             'debug|d' => \$debug,
+             'no_covers|n' => \$no_covers,
+             'artist|a=s' => \$artist,
+             'username|u=s' => \$username,
+             'password|p=s' => \$password,
+             'output_dir|o=s' => \$output_directory,
+             'aws_token|w=s' => \$aws_token);
+             
+# let's see if params are correct and what our mission goals are
+if($help)
+{
+  usage();
+  exit;
+}
+if($no_covers)
+{
+  undef $get_covers;
+}
+if($username eq '')
+{
+  print "missing username\n";
+  exit(1);
+}
+if(!-d $output_directory)
+{
+  print "output directory does not exist.\n";
+  exit(1);
+}
+# will we listen to a supplied lastfm-url or will we roll our own for a similar-artist scheme             
+if ($ARGV[0]=~/lastfm\:\/\//)
+{
+  $url=$ARGV[0]
+}
+elsif ($artist)
+{
+  $artist=~s/\s/\%20/g;
+  $url="lastfm://artist/".$artist."/similarartists";
+}
+else
+{
+  print "please supply an artist name or last.fm url\n";
+  exit(1);
+}
+
+if($password eq '')
+{
+  # we have to ask for a password
+  # and let Term::ReadPassword do the job if available
+  if (eval ("use Term::ReadPassword; 1"))
+  {
+    $password = read_password('password: ');
+  }
+  else
+  {
+    print "password: ";
+    $password = <STDIN>;
+    chomp($password); 
+  }
+}
+
+if($aws_token)
+{
+  # we have a amazon-webservices-token. Is Net::Amazon working?
+  map
+  {
+    my $module = $_;
+    if(!eval ("use $module; 1"))
+      {
+        die "could not initialize $module\n";
+      }
+  } ('Net::Amazon', 'Net::Amazon::Request::Artist');
+}
+
+# last.fm uses a high-security password-obfuscation ;-)
+$password_md5 = md5_password($password);
+
+debug("\nNow trying to play URL $url for user $username with pass $password - md5hash: $password_md5\n");
+
+$sockets = IO::Select->new();
+
+while (1)
+{
+  $buffer = '';
+  if (!$handshake)
+  {
+    debug("\ntrying to log in\n");
+    $handshake = IO::Socket::INET->new(PeerAddr => $ws_host, PeerPort => 80, Proto => "tcp") || die "could not initialize webservice socket\n";
+    $handshake_url = "/radio/handshake.php?version=$version&platform=$platform&username=$username&passwordmd5=$password_md5&debug=0";
+    $request = "GET $handshake_url HTTP/1.1\r\nhost: $ws_host\r\n\r\n";
+    print $handshake $request;
+    $sockets->add($handshake);
+  }
+  elsif (!$tuned)
+  {
+    debug("\ntrying to tune station from $ws_host\n");
+    $tune = IO::Socket::INET->new(PeerAddr => $ws_host, PeerPort => 80, Proto => "tcp") || die "could not initialize webservice socket\n";
+    $tune_url = "/radio/adjust.php?session=$session&url=$url&debug=0";
+    $request = "GET $tune_url HTTP/1.1\r\nhost: $ws_host\r\n\r\n";
+    print $tune $request;
+    $sockets->add($tune);
+  }
+  elsif (!$streaming)
+  {
+    debug("\nrequesting streaming data from $mp3_host\n");
+    $mp3 = IO::Socket::INET->new(PeerAddr => $mp3_host, PeerPort => 80, Proto => "tcp") || die "could not initialize mp3 socket\n";
+    $mp3_url = "/last.mp3?Session=$session";
+    $request = "GET $mp3_url HTTP/1.1\r\nhost: $mp3_host\r\n\r\n";
+    print $mp3 $request;
+    $sockets->add($mp3);
+    $new_track = 1;
+    $streaming = 1;
+  }
+  elsif ($new_track)
+  {
+    # are we receiving mp3 data? - then ask for track info!
+    if (length($mp3_data) >= 4096)
+    {
+      debug("\ntrying to get new track data\n");
+      sleep 3;
+      $track_info = IO::Socket::INET->new(PeerAddr => $ws_host, PeerPort => 80, Proto => "tcp") || die "could not initialize webservice socket\n";
+      $track_data_url = "/radio/np.php?session=$session";
+      $request = "GET $track_data_url HTTP/1.1\r\nhost: $ws_host\r\n\r\n";
+      print $track_info $request;
+      $sockets->add($track_info);
+      undef $new_track;
+    }
+  }
+  elsif ($track_info_data)
+  {
+    debug("parsing track_info_data\n");
+    map
+    {
+      chomp();
+      debug("$_\n");
+      /(.+)=(.+)/;
+      $track_info{$1} = $2;
+    } split /\n/,$track_info_data;
+    undef $track_info_data;
+    $sockets->remove(track_info);
+    $track_info->shutdown(2);
+    if ($get_covers)
+    {
+      # try to retrieve the largest available cover jpeg with wget
+      map 
+      {
+        if ($_ ne '')
+        {
+          $cover = $_;
+        }
+      } ($track_info{'albumcover_small'},$track_info{'albumcover_medium'},$track_info{'albumcover_large'});
+      if ($cover ne '')
+      {
+        $cover_file = "$track_info{'artist'}-$track_info{'album'}-$track_info{'track'}.jpg";
+        if(system("wget -O \"$cover_file\" $cover > /dev/null 2>&1 &")>0){print "failed to retrieve cover art\n"};
+        $cover = '';
+        }
+      }
+      
+      if ($aws_token)
+      {
+        my $aws_ua = Net::Amazon->new( token => $aws_token);
+        my $aws_request = Net::Amazon::Request::Artist->new(artist  => $track_info{'artist'});
+        my $aws_response = $aws_ua->request($aws_request);
+        if ($aws_response->is_success())
+        {
+          my %albums;
+          map
+          {
+            my $album = $_;
+            if ($album->album() eq $track_info{'album'})
+            {
+              $track_info{'year'} = $album->year();
+              $track_info{'label'} = $album->label();
+              my $track_index = 0;
+              map
+              {
+                my $title = $_;
+                chomp($title);
+                $track_index++;
+                if ($title eq $track_info{'track'})
+                {
+                  $track_info{'track_no'} = $track_index;
+                }
+              } $album->tracks();
+              $track_info{'track_count'} = $track_index;
+            }
+          } $aws_response->properties();
+        }
+        else
+        {
+          print "could not ask Amazon webservices for track-info\n";
+          print $aws_response->message();
+          exit(1);
+        }
+      }
+  }
+  # handle sockets
+  map 
+  {
+    my $sock = $_;
+    debug("reading from socket\n");
+    if ($sock eq $handshake)
+    {
+      debug("reading login response\n");
+      $sock->recv($buffer,1024,0) || $sockets->remove($sock);
+      if($buffer =~ /session=([\w\d]+)/)
+      {
+        $session = $1;
+		debug("\nset \$session=\"$session\"");
+      }
+      if($buffer =~ /stream_url=(.+)\n/)
+      {
+        $stream_url = $1;
+		($mp3_host=$1)=~s/http:\/\/([\.\w\d]+)[:\d]*\/.*/$1/;
+		debug("\nset \$mp3_host=\"$mp3_host\"");
+		debug("\nset \$stream_url=\"$stream_url\"");
+      }
+      if($session eq 'FAILED')
+      {
+        die "could not login\n";
+      }
+    }
+    elsif ($sock eq $tune)
+    {
+      debug("reading tune response\n");
+      $sock->recv($buffer,1024,0) || $sockets->remove($sock);
+      if($buffer =~ /HTTP\/1\.. 503/)
+      {
+        print "\nlast.fm service is temoprarily unavailable\n";
+        exit(1);
+      }
+      if($buffer =~ /response=OK/)
+      {
+        $tuned = 1;
+      }
+      else
+      {
+        print "sorry, could not tune last.fm to play $url.\n";
+        if ($artist) 
+        {
+          print "maybe artist \"$artist\" is unkown to last.fm?\n";
+        }
+        else
+        {
+          print "maybe url $url ist not valid?\n";
+        }
+        exit(1);
+      }
+    }
+    elsif ($sock eq $mp3)
+    {
+      debug("reading mp3 data\n");
+      $sock->recv($buffer,262144,0);
+      if ($length = index($buffer,"SYNC",0) != -1 )
+      {
+        debug("found new track\n");
+        print "\n";
+        if ($track_info{'artist'} ne '')
+        {
+          my $mp3_file_name = "$track_info{'artist'}-$track_info{'album'}-$track_info{'track'}.mp3";
+          my $mp3_path = $output_directory."/".$mp3_file_name;
+          open(MP3,">$mp3_path");
+          print MP3 $mp3_data,substr($buffer,0,$length);
+          close MP3;
+          if ($tag_mp3s)
+          {
+            my $mp3 = MP3::Tag->new($mp3_path);
+            my $mp3_tag = $mp3->new_tag("ID3v1");
+            $mp3_tag->title($track_info{'track'});
+            $mp3_tag->artist($track_info{'artist'});
+            $mp3_tag->album($track_info{'album'});
+            $mp3_tag->year($track_info{'year'});
+            $mp3_tag->track($track_info{'track_no'});
+            $mp3_tag->write_tag();
+            my $mp3v2_tag = $mp3->new_tag("ID3v2");
+            $mp3v2_tag->add_frame("TALB",$track_info{'album'});
+            $mp3v2_tag->add_frame("TIT2",$track_info{'track'});
+            $mp3v2_tag->add_frame("TPE1",$track_info{'artist'});
+            $mp3v2_tag->add_frame("TLEN",$track_info{'trackduration'});
+            $mp3v2_tag->add_frame("TRSN","last.fm");
+            $mp3v2_tag->add_frame("TRCK",$track_info{'track_no'});
+            $mp3v2_tag->add_frame("TYER",$track_info{'year'});
+            
+            if ($get_covers)
+            {
+              open(COVER,"$cover_file");
+              my $cover_data;
+              while(<COVER>){$cover_data.=$_};
+              $mp3v2_tag->add_frame("APIC", chr(0x0), "image/jpeg", chr(0x0), "Cover Image", $cover_data);
+            }
+            $mp3v2_tag->write_tag;
+            $mp3->close();
+          }
+        }
+        $new_track = 1;
+        $mp3_data=substr($buffer,$length);
+      }
+      else
+      {
+        $mp3_data.=$buffer;
+      }
+    }
+    elsif ($sock eq $track_info)
+    {
+      debug("reading track info data\n");
+      $sock->recv($buffer,1024,0) || $sockets->remove($sock);
+      $track_info_data .= $buffer;      
+    }
+  } $sockets->can_read(100);
+  map
+  {
+    my $sock = $_;
+    debug("writing to sockets\n");  
+  } $sockets->can_write(100);
+  print "\rDATA_LENGTH: ".length($mp3_data)."  TRACK: $track_info{'track'}  ARTIST: $track_info{'artist'}  ALBUM: $track_info{'album'}";
+ if ($bye_bye){print "\nbye!\n";exit(0);}
+}
+
+sub debug
+{
+  if ($debug)
+  {
+	$|=1;
+    print @_;
+  }
+}
+
+sub usage
+{
+  print <<EOF;
+last.fm-ripper - $VERSION
+(c) Copyright 2006 - Jochen Schneider - <scne59\@googlemail.com>
+
+usage:
+ 
+last.fm-ripper -u <username> [-p <password>] [-d] -[c] [-o <output-dir>] [-a <artist>] <lastfm-url>
+
+  -u, --username          last.fm username
+  -p, --password          last.fm password
+  -a, --artist            artist name (to find similar titles), obsolets last.fm url
+  -d, --debug             enable debugging output
+  -o, --output_directory  where to save mp3-files
+  -n, --nocovers          disable cover download
+  -w, --aws_token         amazon webservices developer token for advanced tagging (http://amazon.com/soap)
+      
+
+EOF
+print "\n";
+}
+
+sub guess_platform
+{
+  my $platform = lc(`uname -s`);
+  chomp($platform);
+  if($platform eq ''){$platform="windows"}; #guess we are on win if uname does not work
+  return $platform;
+}
+
+sub md5_password
+{
+  my $password = shift @_;
+  my $md5 = Digest::MD5->new();
+  $md5->reset;
+  $md5->add($password);
+  return $md5->hexdigest;
+}
+
+=pod
+
+=head1 NAME
+
+last.fm-ripper - save last.fm radio to mp3 files
+
+=head1 SYNOPSIS
+
+last.fm-ripper -u <username> [-p <password>] [-d] -[c] [-o <output-dir>] [-a <artist>] <lastfm-url>
+
+ -u, --username          last.fm username
+ -p, --password          last.fm password
+ -a, --artist            artist name (to find similar titles), obsolets last.fm url
+ -d, --debug             enable debugging output
+ -o, --output_directory  where to save mp3-files
+ -n, --no_covers         disable cover download
+ -w, --aws_token         amazon webservices developer token for advanced tagging (http://amazon.com/soap)
+
+=head1 AUTHOR
+
+Jochen Schneider, <scne59@googlemail.com>
+
+=head1 DESCRIPTION
+
+last.fm-ripper is a small utility to save the last.fm program to individual mp3-files including
+all availabel id3-tags and the cover art (requires MP3::Tag module).
+Requires a valid last.fm login and password (http://www.last.fm/signup.php).
+If you don't like to enter your password on the commandline last.fm-ripper asks for it
+(requires Term::ReadPassword not to be echoed to the terminal).
+
+For advanced tagging (track-no., year) an amazon webservices developer token
+is required (http://amazon.com/soap).
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006 Jochen Schneider.  All rights reserved.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the Artistic License, distributed
+with Perl.
+
+=cut

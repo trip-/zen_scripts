@@ -1,0 +1,30 @@
+#!/bin/bash
+#ES Conversione DivX 5.0
+#ciclo for per modificare estensione...
+#for f in *.txt; do mv "$f" "${f/%txt/log}"; done
+#cambia estensione da txt a log
+
+
+ffmpeg -i "$1"\
+	-vtag DX50\
+	-vcodec mpeg4\
+	-aspect 1.22\
+	-s 320x262\
+	-b 500k\
+	-r 15\
+	-acodec libmp3lame\
+	-ab 128k\
+	-ar 44100\
+	-ac 2\
+	"$2"
+
+#-i $1 //file di input 
+#-vtag DX50 //genera header DivX 5.0 compatible
+#-aspect 2.37 //imposta un rapporto di 2.37:1
+#-s 720x304 //dimensione video
+#-b 700k //video bitrate a 700kbit/s
+#-r 25 //25 fps
+#-acodec mp3 //usa codec audio mp3
+#-ab 128k //audio bitrate 128kbit/s
+#-ac 2 //2 audio channels (stereo)
+#$2 //file di output

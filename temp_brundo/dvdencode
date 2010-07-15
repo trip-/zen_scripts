@@ -1,0 +1,12 @@
+#!/bin/bash
+
+MENCODER="mencoder"
+
+SOURCE="-dvd-device $1 $2 -chapter $3 -alang it"
+AUDIO="-oac mp3lame -lameopts br=128:cbr:vol=6"
+VIDEO="-ovc lavc -lavcopts vcodec=mpeg4:vhq:vbitrate=1200"
+FILTER="-vf yadif,scale=1024:576,crop=992:560:20:10"
+
+for i in 1 2; do
+  $MENCODER $SOURCE $AUDIO ${VIDEO}:vpass=$i $FILTER -o $4 -ffourcc XVID
+done

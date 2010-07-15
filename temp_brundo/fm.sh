@@ -1,0 +1,243 @@
+#! /bin/bash
+
+FM_START='/usr/bin/shell-fm -d >/dev/null 2>/dev/null'
+FM_STOP='killall shell-fm'
+OSD_CLEAN='killall osd_cat >/dev/null 2>/dev/null'
+
+
+PORT=54311
+HOST=localhost
+
+cmd_sender(){
+	#~ param1: command that must be executed
+	
+	if [ -z "$1" ]
+	then
+		command="info"
+	else
+		command=$1
+	fi
+	result=`echo "$command" | nc $HOST $PORT`
+}
+
+osd(){
+	#~ param1: stringa
+	#~ param2: delay
+	
+	isRunning "osd_cat"
+	local var=$?
+	
+	if [ $var -gt 0 ] 
+	then
+		eval $OSD_CLEAN
+	fi
+	
+	if [ -z "$1" ]
+	then
+		string="Nothing to print"
+	else
+		string=$1
+	fi
+	
+	if [ -z "$2" ]
+	then
+		delay=5
+	else
+		delay=$2
+	fi
+	
+	color=red
+	font=-adobe-helvetica-*-*-*-*-30-*-100-100-*-*-iso8859-*
+	
+	echo "$string"|osd_cat \
+		--align=center \
+		--pos=bottom \
+		--offset=-50 \
+		--color=$color \
+		--delay=$delay \
+		--shadow=1 \
+		--font=$font &
+}
+
+
+check(){
+	#osd "Niente di particolare" 1
+	#~ cmd_sender "play lastfm://globaltags/house"
+	#~ osd "Ciao" 1
+	isRunning "osd_cat"
+
+}
+
+status(){
+	echo ""
+}
+
+isRunning(){
+	if [ -z "$1" ]
+	then
+		p="shell-fm"
+	else
+		p="$1"
+	fi
+	running_ps=`ps -e|grep "$p"|wc -l`
+	return $running_ps
+}
+
+
+## FUNZIONI CASE!!!
+sb(){
+	#~ se stoppato avvia, se già attivato stoppa
+	isRunning
+	local var=$?
+	if [ $var -gt 0 ]
+	then
+		#~ eval $FM_STOP
+		stop_fm
+	else
+		#~ eval $FM_START
+		start_fm
+	fi
+}
+
+start_fm(){
+	isRunning
+	local var=$?
+	if [ $var -gt 0 ]
+	then
+		osd "shell-fm is already running!"
+	else
+		osd "Starting shell-fm..." 1
+		eval $FM_START
+	fi
+	
+}
+
+
+stop_fm(){
+	isRunning
+	local var=$?
+	if [ $var -gt 0 ]
+	then
+		osd "Stopping shell-fm..." 1
+		eval $FM_STOP
+	else
+		osd "shell-fm must be running to be stopped!"
+	fi
+}
+
+usage(){
+	echo "Usage: $0 {start|stop|status|info|skip|love|ban|tune}"
+}
+
+info(){
+	isRunning
+	local var=$?
+	if [ $var -gt 0 ]; then
+		cmd_sender
+		osd  "NP: $result" 5
+	else
+		osd "shell-fm isn't running!"
+	fi
+}
+
+skip(){
+	##Senza output (canzone successive segnalata da shell-fm)
+	isRunning
+	local var=$?
+	if [ $var -gt 0 ]; then
+		cmd_sender "skip"
+	else
+		osd "shell-fm isn't running!"
+	fi
+}
+
+love(){
+	isRunning
+	local var=$?
+	if [ $var -gt 0 ]; then
+		cmd_sender
+		local song=$result
+		cmd_sender "love"
+		osd "Loved: ${song}"
+	else
+		osd "shell-fm isn't running!"
+	fi
+}
+
+pause(){
+	isRunning
+	local var=$?
+	if [ $var -gt 0 ]; then
+		cmd_sender
+		local song=$result
+		cmd_sender "pause"
+		osd "Un/Paused: ${song}"
+		#cmd_sender "pause"
+		#local song=$result
+		#osd "Paused: ${song}"
+	else
+		osd "shell-fm isn't running!"
+	fi
+}
+
+tune(){
+	cmd_sender "play lastfm://globaltags/$1"
+}
+
+pl(){
+        ##non funzionante
+	#cmd_sender "play lastfm://user/salvix-b/playlist/$1"
+	cmd_sender "play lastfm://user/salvix-b/playlist"
+}
+
+url(){
+        cmd_sender "play lastfm://$1"
+}
+
+
+case "$1" in
+'help' | '-h' | '--help')
+	usage
+	;;
+'start' | 'on')
+	start_fm
+	;;
+'stop' | 'off' )
+	stop_fm
+	;;
+'info' | '-i' )
+	info
+	;;
+'skip')
+	skip
+	;;
+'test')
+	check
+	;;
+'osd')
+	osd "$2"
+	;;
+'love')
+	love
+	;;
+'tune')
+	tune "$2"
+	;;
+'pl')
+        pl "$2"
+	;;
+'url')
+        url "$2"
+        ;;
+'sb')
+	sb
+	;;
+'pause')
+	pause
+	;;
+*)
+	usage
+	;;
+esac
+
+exit 0

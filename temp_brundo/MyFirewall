@@ -1,0 +1,86 @@
+#!/bin/bash
+
+#Setto le variabili
+eth="wlan0" #interfaccia di rete
+iptables="/sbin/iptables"
+lo="lo"
+dns="193.23.114.130" ##dns pessimo, ma va solo questo in collegio
+case "$1" in
+	start)
+	##Attivazione Firewall
+	##Rimuovo eventuali catene,regole, e altro
+	$iptables -F
+	
+
+	##Imposto le policy a drop
+	$iptables -P INPUT DROP
+	$iptables -P OUTPUT DROP
+	$iptables -P FORWARD DROP
+	
+	##Traffico interno
+	$iptables -A INPUT -i $lo -j ACCEPT
+	$iptables -A OUTPUT -o $lo -j ACCEPT
+
+	##regole per ssh
+	$iptables -A INPUT -i $eth -p tcp --dport 22 -j ACCEPT
+	$iptables -A OUTPUT -o $eth -p tcp --sport 22 -j ACCEPT
+
+	##regole per web http (80) https (443)
+	$iptables -A INPUT -i $eth -p tcp --dport 80  -j ACCEPT
+	$iptables -A INPUT -i $eth -p udp --dport 80 -j ACCEPT
+	$iptables -A OUTPUT -o $eth -p tcp --sport 80  -j ACCEPT
+	$iptables -A OUTPUT -o $eth -p udp --sport 80  -j ACCEPT
+	$iptables -A INPUT -i $eth -p tcp --dport 443  -j ACCEPT
+	$iptables -A INPUT -i $eth -p udp --dport 443 -j ACCEPT
+	$iptables -A OUTPUT -o $eth -p tcp --sport 443  -j ACCEPT
+	$iptables -A OUTPUT -o $eth -p udp --sport 443  -j ACCEPT
+
+
+	##regole per dns 
+	$iptables -A INPUT -i $eth -p udp -s $dns -j ACCEPT
+	$iptables -A OUTPUT -o $eth -p udp -d $dns  -j ACCEPT
+
+	##regole ping
+	$iptables -A INPUT -i $eth -p icmp  -j ACCEPT
+	$iptables -A OUTPUT -o $eth -p icmp  -j ACCEPT
+
+	##IPFORWARDING
+	#$iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
+        	#echo "1" > /proc/sys/net/ipv4/ip_forward
+
+	echo "OK,  sei go"
+	
+	;;
+	stop)
+	##Disattivazione Firewall
+	##Rimuovo eventuali catene,regole, e altro
+	$iptables -F
+	
+
+	##Imposto le policy a accept
+	$iptables -P INPUT ACCEPT
+	$iptables -P OUTPUT ACCEPT
+	$iptables -P FORWARD ACCEPT
+	;;
+	status)
+	##Stato attule del Firewall
+	$iptables -L -x -v -n --line-numbers  
+	#$iptables -t nat -L -x -v -n --line-numbers  
+	;;
+	restart|reload)
+	##Reset Firewall
+	$0 stop
+        $0 start
+	;;
+
+
+	*)
+	##Se sei bambito
+	echo "DIO CAN te ghe da meter {start|stop|restart|reload|status}" >&2
+	exit 1
+	;;
+
+esac
+
+sleep 2
+exit 0
