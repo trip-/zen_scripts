@@ -15,7 +15,7 @@ Programming languages
 =====================
 
 All what you will find here will mostly be written in Python, Ruby or
-bash. Scripts will be splitten into folders and with some self-explaining
+bash. Scripts will be splitted into folders and with some self-explaining
 name (hopefully).
 
 All content is to be considerd under GPL v3, if not specified.
