@@ -1,3 +1,7 @@
-#!/usr/bin/bash
+#!/bin/bash
 
-echo "Work in progess"
+TMP=$(mktemp)
+echo $* > $TMP
+vim $TMP
+echo "$* -> $(head -n1 $TMP)"
+mv "$*" "$(head -n1 $TMP)"
