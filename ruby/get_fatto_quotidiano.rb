@@ -27,11 +27,11 @@ begin
 end
 
 # Il fatto website account data
-FATTOUSER=""
-FATTOPSW=""
+FATTOUSER="thamayor@gmail.com"
+FATTOPSW="condiviso"
 
 # Download folder
-DPATH = "/path/to/my/download/folder"
+DPATH = "./"
 
 # visiting fatto's website
 agent = Mechanize.new
