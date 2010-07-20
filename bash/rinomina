@@ -1,0 +1,14 @@
+#!/bin/bash
+# Written by The Big
+#
+# _VERY_ simple script to rename a file using vim
+ 
+FILE=$( mktemp )
+for i in $(/usr/bin/seq  $(($# ))); do 
+	echo $1
+	echo "$1" > $FILE
+	vim $FILE
+	mv "$1" "$(cat $FILE | head -n 1)" 
+	shift
+done
+rm "$FILE"
