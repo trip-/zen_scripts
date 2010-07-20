@@ -1,0 +1,8 @@
+eval $(ssh-agent)
+xmodmap ~/.Xmodmap &
+xset -dpms &
+xset s off &
+xset r rate 200 &
+xrdb -merge ~/.Xdefaults &
+(sleep 1 ; pypanel & sleep 2; setlayout 0 3 3 0 & ) &
+exec openbox-session

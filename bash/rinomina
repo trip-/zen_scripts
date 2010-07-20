@@ -1,7 +1,0 @@
-#!/bin/bash
-
-TMP=$(mktemp)
-echo $* > $TMP
-vim $TMP
-echo "$* -> $(head -n1 $TMP)"
-mv "$*" "$(head -n1 $TMP)"
