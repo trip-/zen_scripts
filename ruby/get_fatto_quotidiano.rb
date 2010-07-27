@@ -58,9 +58,10 @@ else
     f.log = FATTOUSER
     f.pwd = FATTOPSW
   end.click_button
+  file_name = now.strftime "%Y%m%d - %A %d %B %y.pdf"
   today = sprintf("%d%02d%02d",now.year,now.month,now.day)
   pdf = agent.get "http://www.ilfattoquotidiano.it/openpdf/?n=#{today}"
-  File.open("#{File.join(DPATH,today)}.pdf", "w") do |file|
+  File.open("#{File.join(DPATH, file_name)}", "w") do |file|
     file << pdf.body
   end
 end
