@@ -4,7 +4,7 @@ xlock
 END=$?
 COUNT=1
 while [[ $END != "0" ]]; do 
-		xlock 2>&1 > /dev/null
+		xlock -mode blank 2>&1 > /dev/null
 		END=$?
 		COUNT=$(($COUNT + 1))
 done
