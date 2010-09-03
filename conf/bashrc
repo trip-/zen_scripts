@@ -1,0 +1,47 @@
+PS1='\w $ '
+
+alias ls='ls --color -F'
+alias l='ls'
+alias la='ls -a'
+alias sl='ls'
+alias e='emacs -nw'
+alias eo='emacsclient -n'
+alias cal='cal -3m'
+
+alias irb='irb -r irb/completion'
+
+export CDR_DEVICE="/dev/scd0"
+export CDR_SPEED=4
+export SVN_EDITOR='vim'
+export VISUAL='vim'
+export BROWSER='chromium'
+export EDITOR='emacs -nw'
+export PYTHONDONTWRITEBYTECODE=true
+
+export PATH=/opt/icecream/bin:$PATH:/usr/local/bin:/opt/ruby1.8/bin:/home/carlesso/.android/tools:/usr/share/java/apache-ant/bin:/home/carlesso/.android/platforms/android-8/tools
+export RAILS_GEM_VERSION='2.3.8'
+export PYTHONPATH=/usr/local/python
+export LC_ALL="en_US.utf8"
+export LANG="en_US.utf8"
+alias make='make -j 8'
+
+complete -cf sudo which man tsocks time
+
+export E61='00:12:D2:39:BD:27';
+export MOT='00:19:1F:3A:69:B7';
+
+export GREP_COLOR="1;33"
+alias grep='grep --color=auto'
+
+alias mandrake="rake db:drop; rake db:create; rake db:migrate; rake db:seed"
+
+. /etc/profile.d/autojump.bash
+
+alias tda='tda -G --global-database ~/Dropbox/.todo'
+alias tdd='tdd -G --global-database ~/Dropbox/.todo'
+alias tdr='tdr -G --global-database ~/Dropbox/.todo'
+alias tde='tde -G --global-database ~/Dropbox/.todo'
+alias devtodo='devtodo -G --global-database ~/Dropbox/.todo'
+devtodo 
+# xrandr --output VGA-0 --right-of DVI-0
+alias n='notify-send FINE "Ho finito quello che stavo facendo"'
