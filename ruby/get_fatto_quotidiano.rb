@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 #
 # Author: Mattia Gheda
@@ -20,18 +20,24 @@
 
 require 'rubygems'
 
+@out = false
+
 begin
   require 'mechanize'
 rescue LoadError
   $stderr.print "#{File.basename(__FILE__)} requires mechanize gem to work\nPlease install it with gem install mechanize\n"
-  exit
+  @out = true
 end
 begin
   require 'parseconfig'
 rescue LoadError
   $stderr.print "#{File.basename(__FILE__)} requires parseconfig gem to work\nPlease install it with gem install parseconfig\n"
-  exit
+  @out = true
 end  
+
+if @out
+  exit
+end
 
 # Il fatto website account data strored in ~/.zen_data
 # in the form:

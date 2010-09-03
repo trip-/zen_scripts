@@ -1,6 +1,6 @@
 #!/bin/bash
 
-xlock
+xlock -mode blank
 END=$?
 COUNT=1
 while [[ $END != "0" ]]; do 

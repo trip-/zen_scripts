@@ -1,0 +1,112 @@
+;; Enrico Carlesso ~/.emacs file
+;; <enrico@ecarlesso.org>
+
+(defvar *emacs-load-start* (current-time))
+(setq make-backup-files nil)
+
+(autoload 'php-mode "php-mode.el" "Php mode." t)
+(setq auto-mode-alist (append '(("/*.\.php[345]?$" . php-mode)) auto-mode-alist))
+
+(add-to-list 'load-path "~/.emacs.d/el/")
+
+;; (require 'pycomplete)
+(setq auto-mode-alist (cons '("\\.py$" . python-mode) auto-mode-alist))
+(setq auto-mode-alist (append '(("/*.\.tac$" . python-mode)) auto-mode-alist))
+(autoload 'python-mode "python-mode" "Python editing mode." t)
+;; (autoload 'pymacs-load "pymacs" nil t)
+;; (autoload 'pymacs-eval "pymacs" nil t)
+;; (autoload 'pymacs-apply "pymacs")
+;; (autoload 'pymacs-call "pymacs")
+;; (setq interpreter-mode-alist(cons '("python" . python-mode)
+;; 				  interpreter-mode-alist))
+
+(add-to-list 'load-path "/usr/share/emacs/site-lisp/emhacks")
+(require 'tabbar)
+(tabbar-mode)
+
+;; (require 'muse-mode)     ; load authoring mode
+;; (require 'muse-html)     ; load publishing styles I use
+;; (require 'muse-latex)
+;; (require 'muse-context)
+;; (require 'muse-project)  ; publish files in projects
+
+(require 'w3m-load)
+
+;;(setq-default header-line-format "%f\n")
+
+(defun tabbar-buffer-groups ()
+  (list
+   (cond
+    ((string-equal "*" (substring (buffer-name) 0 1))
+     "Common"
+     )
+    (t
+     "Work"
+     )
+    )))
+
+(setq tabbar-buffer-groups-function 'tabbar-buffer-groups)
+
+(global-set-key (kbd "C-<tab>") 'tabbar-forward-tab)
+(global-set-key (kbd "<backtab>") 'tabbar-backward-tab)
+(global-set-key (kbd "<C-S-iso-lefttab>") 'tabbar-backward-tab)
+;; (global-unset-key (kbd "C-x C-c"))
+(global-unset-key (kbd "C-w"))
+
+(setq confirm-kill-emacs 'yes-or-no-p)
+
+;; (setq-default header-line-format '((buffer-file-name)))
+;; (setq-default header-line-format "%f")
+;; (setq-default header-line-format (append '(("\n%f")) header-line-format))
+
+(require 'color-theme)
+(color-theme-initialize)
+;; (color-theme-dark-laptop)
+
+(load-file "/usr/share/emacs/site-lisp/cedet/common/cedet.el")
+;; (global-ede-mode 1)
+;; (semantic-load-enable-code-helpers)
+;; (global-srecode-minor-mode 1)
+;; (require 'semantic-ia)
+;; (require 'semantic-gcc)
+;; (define-key your-mode-map-here "." 'semantic-complete-self-insert)
+
+(add-to-list 'load-path "/usr/share/emacs/site-lisp/ecb")
+(require 'ecb-autoloads)
+(custom-set-variables
+  ;; custom-set-variables was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
+ '(ecb-options-version "2.40"))
+(custom-set-faces
+  ;; custom-set-faces was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
+ )
+
+(defvar autosave-dir
+  (concat "/tmp/emacs_autosaves/" (user-login-name) "/"))
+(make-directory autosave-dir t)
+(setq auto-save-file-name-transforms `(("\\(?:[^/]*/\\)*\\(.*\\)" ,(concat
+								    autosave-dir "\\1") t)))
+
+
+(defun byte-recompile-home ()
+  (interactive)
+  (byte-recompile-directory "~/.emacs.d" 0))
+
+(message "My .emacs loaded in %ds" (destructuring-bind (hi lo ms)
+				       (current-time)
+				     (- (+ hi lo) (+ (first *emacs-load-start*)
+						     (second *emacs-load-start*)))))
+
+;; Interactively Do Things (highly recommended, but not strictly required)
+(require 'ido)
+(ido-mode t)
+
+;; Rinari
+(add-to-list 'load-path "/usr/share/emacs/site-lisp/rinari")
+(require 'rinari)
+
