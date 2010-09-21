@@ -1,0 +1,34 @@
+keycode 176 = XF86AudioRaiseVolume
+keycode 174 = XF86AudioLowerVolume
+keycode 160 = XF86AudioMute
+keycode 236 = XF86Go
+keycode 178 = XF86HomePage
+keycode 233 = XF86AudioNext
+keycode 234 = XF86AudioPrev
+keycode 223 = XF86Sleep
+
+keycode 37 = Control_L
+
+keycode 108 = Mode_switch Mode_switch
+keysym d = d NoSymbol degree        NoSymbol
+keysym a = a NoSymbol U00E0					NoSymbol
+keysym e = e NoSymbol U00E8					U00E9
+keysym i = i NoSymbol U00EC					NoSymbol
+keysym o = o NoSymbol U00F2					NoSymbol
+keysym u = u NoSymbol U00F9					NoSymbol
+keysym a = a NoSymbol U00E0					NoSymbol
+keysym m = m NoSymbol emdash        mu
+keysym n = n NoSymbol endash        NoSymbol
+keysym s = s NoSymbol U03C2         NoSymbol
+keysym 1 = 1 exclam   U00B0	        NoSymbol
+keysym 2 = 2 at			  twosuperior   NoSymbol
+keysym 3 = 3 numbersign threesuperior NoSymbol
+keysym 4 = 4 dollar   EuroSign      NoSymbol
+keysym space = space  NoSymbol      nobreakspace NoSymbol
+keysym minus = minus  underscore    U2212        NoSymbol
+keycode 34 = bracketleft  braceleft  leftsinglequotemark  leftdoublequotemark
+keycode 35 = bracketright braceright rightsinglequotemark rightdoublequotemark
+keysym KP_Subtract = KP_Subtract NoSymbol U2212    NoSymbol
+keysym KP_Multiply = KP_Multiply NoSymbol multiply NoSymbol
+keysym KP_Divide   = KP_Divide   NoSymbol division NoSymbol
+
