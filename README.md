@@ -30,6 +30,7 @@ Ruby
 ------
 * **ph.rb** Placeholds the directory
 * **get_fatto_quotidiano** Simple script to download world's best newspaper :P
+* **dummy_image** Simple script to download dummy images from dummyimage.com
 
 Bash
 ------
