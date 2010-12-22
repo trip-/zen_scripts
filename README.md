@@ -40,3 +40,7 @@ Bash
 * **fm** Key-bindable interface to shell-fm
 * **gnuplot_graph_example** Simple gnuplot usage example
 * **ixlock** A xlock wrapper which restarts xlock if it exit due a crash
+
+Perl
+-----
+* **vcard2mutt** From google vCards to mutt-alias. Courtesy of therandymon.com
