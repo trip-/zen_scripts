@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # Uses google apis to translate what passed as arguments from a language to another
 # example translate.py -l it:en casa
