@@ -30,6 +30,6 @@ s2 = Squadra(2, pp.pop(randint(0, len(pp) - 1)), pp.pop(randint(0, len(pp) - 1))
 s3 = Squadra(3, pp.pop(randint(0, len(pp) - 1)), pp.pop(randint(0, len(pp) - 1)))
 s4 = Squadra(4, pp.pop(randint(0, len(pp) - 1)), pp.pop(randint(0, len(pp) - 1)))
 
-for i in [s1, s2, s3, s3]:
+for i in [s1, s2, s3, s4]:
   print i
 
