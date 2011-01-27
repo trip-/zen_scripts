@@ -40,6 +40,7 @@ Bash
 * **fm** Key-bindable interface to shell-fm
 * **gnuplot_graph_example** Simple gnuplot usage example
 * **ixlock** A xlock wrapper which restarts xlock if it exit due a crash
+* **tp_smapi** A script to take advantage of thinkpad smapi module
 
 Perl
 -----
