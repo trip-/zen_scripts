@@ -1,6 +1,8 @@
 #! /bin/bash
 
-FM_START='/usr/bin/shell-fm -d >/dev/null 2>/dev/null'
+
+
+FM_START='/usr/bin/shell-fm -d -i localhost -p 54311 -b >/dev/null 2>/dev/null'
 FM_STOP='killall shell-fm'
 OSD_CLEAN='killall osd_cat >/dev/null 2>/dev/null'
 
@@ -17,7 +19,7 @@ cmd_sender(){
 	else
 		command=$1
 	fi
-	result=`echo "$command" | nc $HOST $PORT`
+	result=`echo "$command" | nc $HOST $PORT -q 1`
 }
 
 osd(){

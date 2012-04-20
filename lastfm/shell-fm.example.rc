@@ -1,0 +1,6 @@
+username = YOUR_LASTFM_USERNAME
+password = YOUR_LASTFM_PASSWORD
+np-file = /home/YOUR_HOME_DIRECTORY/.shell-fm/now_playing
+np-file-format = %a - %t
+np-cmd = /PATH_TO_SCRIPT/fm.sh info
+default-radio = lastfm://globaltags/90s
